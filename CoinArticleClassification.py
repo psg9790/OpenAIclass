@@ -5,15 +5,17 @@ import urllib.request
 from collections import Counter
 from konlpy.tag import Mecab
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-
+from keras.preprocessing.text import Tokenizer
+from keras.utils import pad_sequences
 print('import complete')
 
 # 데이터셋 total_data로 가져옴
-total_data = pd.read_table(
-    'C:/Users/PSG/Desktop/OpenAIclass/dataset.txt', names=['date', 'article', 'label'], encoding='cp949')
+total_data = pd.read_csv(
+    './coinpan.csv', names=['label', 'article'])
+
 print(total_data[:5])
+
+
 
 train_data, test_data = train_test_split(
     total_data, test_size=0.25, random_state=42)
@@ -43,7 +45,7 @@ stopwords = ['도', '는', '다', '의', '가', '이', '은', '한', '에', '하
              '인', '듯', '과', '와', '네', '들', '듯', '지', '임', '게', '만', '게임', '겜', '되', '음', '면']
 
 # 형태소 분석기 Mecab을 사용해서 토큰화
-mecab = Mecab()
+mecab = Mecab(dicpath=r"C:/mecab/mecab-ko-dic")
 train_data['tokenized'] = train_data['article'].apply(mecab.morphs)
 train_data['tokenized'] = train_data['tokenized'].apply(
     lambda x: [item for item in x if item not in stopwords])
@@ -57,9 +59,9 @@ positive_words = np.hstack(
     train_data[train_data.label == 1]['tokenized'].values)
 
 negative_word_count = Counter(negative_words)
-print(negative_word_count.most_common(20))
+#print(negative_word_count.most_common(20))
 positive_word_count = Counter(positive_words)
-print(positive_word_count.most_common(20))
+#print(positive_word_count.most_common(20))
 
 X_train = train_data['tokenized'].values
 y_train = train_data['label'].values
@@ -104,6 +106,7 @@ tokenizer = Tokenizer(vocab_size, oov_token='OOV')
 tokenizer.fit_on_texts(X_train)
 X_train = tokenizer.texts_to_sequences(X_train)
 X_test = tokenizer.texts_to_sequences(X_test)
+print(X_train[:5])
 
 # 최대길이 64, 평균길이 15... 60으로 패딩해도 될까?
 
@@ -124,3 +127,43 @@ below_threshold_len(max_len, X_train)
 # 실제로 패딩 적용
 X_train = pad_sequences(X_train, maxlen=max_len)
 X_test = pad_sequences(X_test, maxlen=max_len)
+
+# 모델 생성, 학습
+import re
+from keras.layers import Embedding, Dense, LSTM, Bidirectional
+from keras.models import Sequential
+from keras.models import load_model
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+
+embedding_dim = 100
+hidden_units = 128
+
+model = Sequential()
+model.add(Embedding(vocab_size, embedding_dim))
+model.add(Bidirectional(LSTM(hidden_units))) # Bidirectional LSTM을 사용
+model.add(Dense(1, activation='sigmoid'))
+
+#es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=4)
+mc = ModelCheckpoint('best_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
+
+model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
+history = model.fit(X_train, y_train, epochs=15, callbacks=[mc], batch_size=256, validation_split=0.2)
+
+# 학습 완료된 모델 불러오기
+loaded_model = load_model('best_model.h5')
+print("테스트 정확도: %.4f" % (loaded_model.evaluate(X_test, y_test)[1]))
+
+# 예측을 위해서 입력한.. 텍스트에 대해서 학습하기 전에 했던 전처리 과정을 동일하게 해줌
+def sentiment_predict(new_sentence):
+  new_sentence = re.sub(r'[^ㄱ-ㅎㅏ-ㅣ가-힣 ]','', new_sentence)
+  new_sentence = mecab.morphs(new_sentence) # 토큰화
+  new_sentence = [word for word in new_sentence if not word in stopwords] # 불용어 제거
+  encoded = tokenizer.texts_to_sequences([new_sentence]) # 정수 인코딩
+  pad_new = pad_sequences(encoded, maxlen = max_len) # 패딩
+  score = float(loaded_model.predict(pad_new)) # 예측
+  if(score > 0.5):
+    print("{:.2f}% 확률로 긍정 리뷰입니다.".format(score * 100))
+  else:
+    print("{:.2f}% 확률로 부정 리뷰입니다.".format((1 - score) * 100))
+
+sentiment_predict('가격대비 정말 혜자게임인거는 맞지만 중간에 어인족 마을에서 노가다는 정말 짜증났습니다. 마치 메이플스토리 퀘스트 노가다 마냥 계속 왔다리갔다리 시키는거 개극혐 근데 게임은 전체적으로 재밌습니다.')
