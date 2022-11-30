@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 # 엑셀 불러와서 데이터프레임으로
 candles_data = 60      # 사용할 분봉 데이터
-candles_window = 20     # 데이터 프레임에 들어갈 캔들 개수 - 20 선택시 20+20=40개의 input
+candles_window = 10     # 데이터 프레임에 들어갈 캔들 개수 - 20 선택시 20+20=40개의 input
 MA_A = 5    # 첫번째 MA - 5, 10, 20, 60, 120
 MA_B = 10   # 두번째 MA - 5, 10, 20, 60, 120
 
@@ -22,7 +22,6 @@ def normalize(arr, t_min, t_max):
     diff_arr = max(arr) - min(arr)
     for i in arr:
         temp = (((i - min(arr))*diff)/diff_arr) + t_min
-        temp -= 1
         norm_arr.append(temp)
     return norm_arr
 
@@ -30,13 +29,17 @@ def normalize(arr, t_min, t_max):
 for i in range(0, len(xl.index)-candles_window):
     df = xl.loc[i:i+(candles_window-1), ['ma'+str(MA_A), 'ma'+str(MA_B), 'per']]
 
-    x_trainBlock = []
-    for j in range(i,i+candles_window):
-        x_trainBlock.append(df.loc[j, 'ma'+str(MA_A)])
-    #for j in range(i,i+candles_window):
-        x_trainBlock.append(df.loc[j, 'ma'+str(MA_B)])
-    # x_trainBlock = normalize(x_trainBlock, 0, 2)
-    x_datas.append(x_trainBlock)
+    x_trainBlock1 = []
+    for j in range(i, i+candles_window):
+        x_trainBlock1.append(df.loc[j, 'ma'+str(MA_A)])
+
+    x_trainBlock2 = []
+    for j in range(i, i + candles_window):
+        x_trainBlock2.append(df.loc[j, 'ma'+str(MA_B)])
+
+    x_trainBlock2 = np.array(x_trainBlock2) - np.array(x_trainBlock1)
+    x_trainBlock2 = normalize(x_trainBlock2, 0, 1)
+    x_datas.append(x_trainBlock2)
     y_datas.append(df.loc[i+(candles_window-1), 'per'])
 
 x_datas = np.array(x_datas)
@@ -47,33 +50,33 @@ y_datas = np.array(y_datas)
 x_train, x_test, y_train, y_test = train_test_split(x_datas, y_datas, test_size=0.2, random_state=777)
 
 
-"""for i in range(10):
-    plt.plot(x_train[i*100][:19])
-    plt.plot(x_train[i*100][20:])
-    plt.show()"""
+for i in range(10):
+    #plt.plot(x_train[i*100][:99])
+    #plt.plot(x_train[i*100][100:])
+    plt.plot(x_train[i*100])
+    plt.show()
 
 
 # data를 실제 모델에 넣을 땐 타겟으로 한 MA중 더 큰값으로 normalize해서 반환 (size는 내가 정의? 20)
 # BatchNormalization 쓰면 될듯?
 
 # ex) 20+20, 40개의 데이터를 MLP에 넣어줌
-inputs = tf.keras.Input(shape=(40,))
+inputs = tf.keras.Input(shape=(10,))
 
 x = keras.layers.BatchNormalization()(inputs)
-x = tf.keras.layers.Dense(40)(x)
+x = tf.keras.layers.Dense(100)(x)
 
 x = keras.layers.BatchNormalization()(x)
-x = tf.keras.layers.Dense(32, activation='tanh')(x)
-
-
-x = keras.layers.BatchNormalization()(x)
-x = tf.keras.layers.Dense(16, activation='tanh')(x)
+x = tf.keras.layers.Dense(64, activation='relu')(x)
 
 x = keras.layers.BatchNormalization()(x)
-x = tf.keras.layers.Dense(8, activation='tanh')(x)
+x = tf.keras.layers.Dense(32)(x)
 
 x = keras.layers.BatchNormalization()(x)
-x = tf.keras.layers.Dense(4, activation='relu')(x)
+x = tf.keras.layers.Dense(16)(x)
+
+x = keras.layers.BatchNormalization()(x)
+x = tf.keras.layers.Dense(4)(x)
 
 outputs = Dense(1)(x)
 
@@ -87,7 +90,7 @@ model.compile(
 model.summary()
 
 hist = model.fit(x_train, y_train, batch_size=16,
-                 epochs=1000, validation_split=0.2)
+                 epochs=50, validation_split=0.2)
 test_scores = model.evaluate(x_test, y_test, verbose=2)
 print('Test loss:', test_scores[0])
 print('Test accuracy:', test_scores[1])
