@@ -1,15 +1,8 @@
-import keras.layers
 import tensorflow as tf
-from keras.models import Sequential
-from keras.layers import Dense, LSTM
-import keras.backend as K
-from keras.callbacks import EarlyStopping
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 import matplotlib.pyplot as plt
-import math
 
 # 파라미터
 candles_data = 15      # 사용할 분봉 데이터
