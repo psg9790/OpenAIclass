@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 파라미터
-candles_data = 15      # 사용할 분봉 데이터
+candles_data = 5      # 사용할 분봉 데이터
 
 # 엑셀
 xl = pd.read_table('./'+str(candles_data)+'candles.txt',

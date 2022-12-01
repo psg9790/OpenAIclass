@@ -24,8 +24,12 @@ date=[]
 price=[]
 while True:
     targetTimeStr = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime((targetTime)))
-    url = "https://api.upbit.com/v1/candles/minutes/"+str(candleMinute)+"?market=KRW-BTC&to="+targetTimeStr+"%2B09:00&count=200"
-    # print(url)
+
+    # 분봉
+    # url = "https://api.upbit.com/v1/candles/minutes/"+str(candleMinute)+"?market=KRW-BTC&to="+targetTimeStr+"%2B09:00&count=200"
+
+    # 일봉
+    url = "https://api.upbit.com/v1/candles/days?market=KRW-BTC&to="+targetTimeStr+"%2B09:00&count=200"
 
     headers = {"accept": "application/json"}
 
