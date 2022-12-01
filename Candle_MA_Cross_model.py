@@ -11,6 +11,15 @@ candles_data =60   # 사용할 분봉 데이터
 target_MA_1 = 20
 target_MA_2 = 60
 
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+
+# 파라미터
+candles_data = 240      # 사용할 분봉 데이터
+target_MA_1 = 5
+target_MA_2 = 10
+
 # 엑셀
 xl = pd.read_table('./'+str(candles_data)+'candles.txt',
                    names=['date', 'price', 'ma5', 'ma10', 'ma20', 'ma60', 'ma120', 'per'])
@@ -53,6 +62,8 @@ for i in range(len(MA_1) - 20):
         y_data.append([0])
 
 y_data = np.array(y_data)
+print('x_data head5: ' + str(x_data[:5]))
+print('y_data head5: ' + str(y_data[:5]))
 print('x_data shape: ' + str(x_data.shape))
 print('y_data shape: ' + str(y_data.shape))
 """============================================="""
