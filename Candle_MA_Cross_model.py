@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 
 # 파라미터
 candles_data = 5      # 사용할 분봉 데이터
+target_MA_1 = 5
+target_MA_2 = 10
 
 # 엑셀
 xl = pd.read_table('./'+str(candles_data)+'candles.txt',
@@ -15,7 +17,7 @@ xl = pd.read_table('./'+str(candles_data)+'candles.txt',
 """============================================="""
 # MA 두개 증감률 계산
 MA = []
-MA = xl.loc[:,'ma5']
+MA = xl.loc[:,'ma'+str(target_MA_1)]
 MA_1 = []
 for i in range(len(MA)):
     if i != len(MA)-1:
@@ -24,7 +26,7 @@ for i in range(len(MA)):
 
 MA_1 = np.array(MA_1)
 
-MA = xl.loc[:,'ma10']
+MA = xl.loc[:,'ma'+str(target_MA_2)]
 MA_2 = []
 for i in range(len(MA)):
     if i != len(MA)-1:
@@ -50,6 +52,8 @@ for i in range(len(MA_1) - 20):
         y_data.append([0])
 
 y_data = np.array(y_data)
+print('x_data shape: ' + str(x_data.shape))
+print('y_data shape: ' + str(y_data.shape))
 """============================================="""
 # model
 inputs = keras.Input(shape=(20,2))
@@ -63,9 +67,13 @@ print(model.summary())
 # train, test 분리
 x_train, x_test, y_train, y_test = train_test_split(x_data, y_data,
                                                     test_size=0.2, random_state=777)
+print('x_train length: ' + str(len(x_train)))
+print('x_test length: ' + str(len(x_test)))
+print('y_train length: ' + str(len(y_train)))
+print('y_test length: ' + str(len(y_test)))
 """============================================="""
 model.compile(optimizer="adam", loss="binary_crossentropy", metrics=['accuracy'])
-hist = model.fit(np.array(x_train), np.array(y_train), epochs=100, validation_split=0.2)
+hist = model.fit(np.array(x_train), np.array(y_train), epochs=1, validation_split=0.2)
 
 # 훈련 과정 시각화 (손실)
 plt.plot(hist.history['loss'])
@@ -73,3 +81,5 @@ plt.plot(hist.history['accuracy'])
 plt.legend(['loss', 'accuracy'])
 plt.xlabel('Epoch')
 plt.show()
+
+model.save('./cross_model'+str(candles_data)+'_'+ str(target_MA_1) + '_' + str(target_MA_2) +'.h5')
