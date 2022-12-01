@@ -5,10 +5,11 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 # 파라미터
-candles_data = 5      # 사용할 분봉 데이터
-target_MA_1 = 5
-target_MA_2 = 10
+candles_data =60   # 사용할 분봉 데이터
+target_MA_1 = 20
+target_MA_2 = 60
 
 # 엑셀
 xl = pd.read_table('./'+str(candles_data)+'candles.txt',
