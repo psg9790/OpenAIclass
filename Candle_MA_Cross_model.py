@@ -73,13 +73,17 @@ print('y_train length: ' + str(len(y_train)))
 print('y_test length: ' + str(len(y_test)))
 """============================================="""
 model.compile(optimizer="adam", loss="binary_crossentropy", metrics=['accuracy'])
-hist = model.fit(np.array(x_train), np.array(y_train), epochs=1, validation_split=0.2)
+hist = model.fit(np.array(x_train), np.array(y_train), epochs=60, validation_split=0.2)
 
 # 훈련 과정 시각화 (손실)
 plt.plot(hist.history['loss'])
 plt.plot(hist.history['accuracy'])
-plt.legend(['loss', 'accuracy'])
+plt.plot(hist.history['val_loss'])
+plt.plot(hist.history['val_accuracy'])
+plt.legend(['loss', 'accuracy', 'val_loss', 'val_accuracy'])
 plt.xlabel('Epoch')
-plt.show()
+#plt.show()
+plt.savefig('./Model/cross_model'+str(candles_data)+'_'+ str(target_MA_1) + '_' + str(target_MA_2) +'.png',
+            dpi=300)
 
-model.save('./cross_model'+str(candles_data)+'_'+ str(target_MA_1) + '_' + str(target_MA_2) +'.h5')
+model.save('./Model/cross_model'+str(candles_data)+'_'+ str(target_MA_1) + '_' + str(target_MA_2) +'.h5')
