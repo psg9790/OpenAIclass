@@ -14,12 +14,6 @@ target_MA_2 = 60
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-
-# 파라미터
-candles_data = 240      # 사용할 분봉 데이터
-target_MA_1 = 5
-target_MA_2 = 10
-
 # 엑셀
 xl = pd.read_table('./'+str(candles_data)+'candles.txt',
                    names=['date', 'price', 'ma5', 'ma10', 'ma20', 'ma60', 'ma120', 'per'])
